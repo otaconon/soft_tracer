@@ -1,25 +1,29 @@
+#pragma once
+
 #include "SDL3/SDL_render.h"
 #include <SDL3/SDL.h>
 #include <cstdint>
+#include <glm/glm.hpp>
 #include <vector>
 
 constexpr uint8_t g_channels = 3;
 
 class Renderer {
 public:
-  Renderer(SDL_Window* window, uint32_t width, uint32_t height);
+  Renderer(SDL_Window *window, uint32_t width, uint32_t height);
   ~Renderer();
 
-  SDL_Renderer* Get();
+  SDL_Renderer *get() const;
 
-  void BeginRendering();
-  void EndRendering();
+  void begin_rendering() const;
+  void end_rendering() const;
 
-  void SetPixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b);
+  void set_pixel(uint32_t x, uint32_t y, float r, float g, float b);
+  void set_pixel(uint32_t x, uint32_t y, glm::vec3 color);
 
 private:
-  SDL_Renderer *renderer_;
-  SDL_Texture *render_tex_;
-  uint32_t width_, height_;
-  std::vector<uint8_t> pixels_;
+  SDL_Renderer *_renderer;
+  SDL_Texture *_renderer_texture;
+  uint32_t _width, _height;
+  std::vector<float> _pixels;
 };

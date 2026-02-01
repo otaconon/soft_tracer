@@ -1,53 +1,62 @@
 #include "soft_tracer/renderer.hpp"
-#include "SDL3/SDL_oldnames.h"
+#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include <cassert>
 
 Renderer::Renderer(SDL_Window *window, uint32_t width, uint32_t height)
-    : renderer_{SDL_CreateRenderer(window, NULL)}, width_{width},
-      height_{height}, pixels_(width * height * g_channels),
-      render_tex_{SDL_CreateTexture(renderer_, SDL_PIXELFORMAT_RGB24,
+    : _renderer{SDL_CreateRenderer(window, nullptr)},
+      _renderer_texture{SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGB96_FLOAT,
                                     SDL_TEXTUREACCESS_STREAMING, width,
-                                    height)} {
-  SDL_SetRenderLogicalPresentation(renderer_, width, height,
+                                    height)},
+      _width{width}, _height{height}, _pixels(width * height * g_channels) {
+  SDL_SetRenderLogicalPresentation(_renderer, width, height,
                                    SDL_LOGICAL_PRESENTATION_LETTERBOX);
 }
 
-Renderer::~Renderer() { SDL_DestroyRenderer(renderer_); }
+Renderer::~Renderer() { SDL_DestroyRenderer(_renderer); }
 
-SDL_Renderer *Renderer::Get() { return renderer_; }
+SDL_Renderer *Renderer::get() const { return _renderer; }
 
-void Renderer::BeginRendering() { SDL_RenderClear(renderer_); }
+void Renderer::begin_rendering() const { SDL_RenderClear(_renderer); }
 
-void Renderer::EndRendering() {
+void Renderer::end_rendering() const {
   void *texture_pixels;
   int32_t pitch = 0;
 
-  if (SDL_LockTexture(render_tex_, nullptr, &texture_pixels, &pitch)) {
-    size_t src_row_size = width_ * g_channels;
+  if (SDL_LockTexture(_renderer_texture, nullptr, &texture_pixels, &pitch)) {
+    const size_t src_row_elements = _width * g_channels;
+    const size_t src_row_size = src_row_elements * sizeof(float);
 
-    uint8_t *src = pixels_.data();
-    uint8_t *dst = static_cast<uint8_t*>(texture_pixels);
+    const float *src = _pixels.data();
+    auto dst = static_cast<uint8_t *>(texture_pixels);
 
-    for (int y = 0; y < height_; ++y) {
+    for (int y = 0; y < _height; ++y) {
       std::memcpy(dst, src, src_row_size);
-      src += src_row_size;
+      src += src_row_elements;
       dst += pitch;
     }
 
-    SDL_UnlockTexture(render_tex_);
+    SDL_UnlockTexture(_renderer_texture);
   }
 
-  SDL_RenderTexture(renderer_, render_tex_, nullptr, nullptr);
-  SDL_RenderPresent(renderer_);
+  SDL_RenderTexture(_renderer, _renderer_texture, nullptr, nullptr);
+  SDL_RenderPresent(_renderer);
 }
 
-void Renderer::SetPixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g,
-                        uint8_t b) {
-  uint32_t idx = (y * width_ + x) * g_channels;
-  assert(idx < pixels_.size() && "Pixel index out of range");
+void Renderer::set_pixel(uint32_t x, uint32_t y, float r, float g, float b) {
+  const uint32_t idx = (y * _width + x) * g_channels;
+  assert(idx < _pixels.size() && "Pixel index out of range");
 
-  pixels_[idx + 0] = r;
-  pixels_[idx + 1] = g;
-  pixels_[idx + 2] = b;
+  _pixels[idx + 0] = r;
+  _pixels[idx + 1] = g;
+  _pixels[idx + 2] = b;
+}
+
+void Renderer::set_pixel(uint32_t x, uint32_t y, glm::vec3 color) {
+  const size_t idx = (y * _width + x) * g_channels;
+  assert(idx < _pixels.size() && "Pixel index out of range");
+
+  _pixels[idx + 0] = color.r;
+  _pixels[idx + 1] = color.g;
+  _pixels[idx + 2] = color.b;
 }
