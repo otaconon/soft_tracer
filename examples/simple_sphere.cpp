@@ -57,11 +57,16 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
     entity_manager.add_components(sphere, Sphere{{i, 0, -1}, 0.2f});
   }
 
+  constexpr int samples = 8;
+  constexpr float pixel_color_scale = 1.f / samples;
   for (uint32_t y = 0; y < image_height; ++y) {
     for (uint32_t x = 0; x < image_width; ++x) {
-      auto entities_hit = camera.ray_cast(x, y);
-      glm::vec3 color = ray_trace(entities_hit);
-      app->renderer.set_pixel(x, y, color);
+      glm::vec3 color(0.f);
+      for (int sample = 0; sample < samples; sample++) {
+        auto entities_hit = camera.ray_cast(x, y);
+        color += ray_trace(entities_hit);
+      }
+      app->renderer.set_pixel(x, y, pixel_color_scale * color);
     }
   }
 

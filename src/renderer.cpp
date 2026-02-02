@@ -58,7 +58,7 @@ void Renderer::set_pixel(uint32_t x, uint32_t y, glm::vec3 color) {
   const size_t idx = (y * _image_width + x) * g_channels;
   assert(idx < _pixels.size() && "Pixel index out of range");
 
-  _pixels[idx + 0] = color.r;
-  _pixels[idx + 1] = color.g;
-  _pixels[idx + 2] = color.b;
+  _pixels[idx + 0] = glm::clamp(color.r, 0.f, 1.f);
+  _pixels[idx + 1] = glm::clamp(color.g, 0.f, 1.f);
+  _pixels[idx + 2] = glm::clamp(color.b, 0.f, 1.f);
 }

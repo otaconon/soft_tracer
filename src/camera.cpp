@@ -3,6 +3,7 @@
 #include "soft_tracer/hit_system.hpp"
 #include "soft_tracer/ray.hpp"
 #include "soft_tracer/sphere.hpp"
+#include "soft_tracer/utils.hpp"
 
 #include <limits>
 #include <print>
@@ -28,12 +29,14 @@ Camera::Camera(uint32_t image_width, uint32_t image_height) {
 
 std::vector<HitResult> Camera::ray_cast(uint32_t pixel_x,
                                         uint32_t pixel_y) const {
+  glm::vec2 offset = sample_square();
   glm::vec3 pixel_center = _pixel00_pos +
-                           static_cast<float>(pixel_x) * _pixel_delta_u +
-                           static_cast<float>(pixel_y) * _pixel_delta_v;
+                           (pixel_x + offset.x) * _pixel_delta_u +
+                           (pixel_y + offset.y) * _pixel_delta_v;
   glm::vec3 ray_direction = glm::normalize(pixel_center - _center);
   Ray ray(_center, ray_direction);
 
-  auto entities_hit = hit_entities_with<Sphere>(ray, {0.0001f, std::numeric_limits<float>::infinity()});
+  auto entities_hit = hit_entities_with<Sphere>(
+      ray, {0.0001f, std::numeric_limits<float>::infinity()});
   return entities_hit;
 }
