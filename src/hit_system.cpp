@@ -7,8 +7,7 @@
 #include "soft_tracer/sphere.hpp"
 
 template <>
-std::vector<HitResult> hit_entities_with<Sphere>(const Ray &ray, float t_min,
-                                              float t_max) {
+std::vector<HitResult> hit_entities_with<Sphere>(const Ray &ray, const Interval& t_interval) {
   auto &entity_manager = S_EntityManager::get_instance();
   std::vector<HitResult> entities_hit;
 
@@ -23,10 +22,10 @@ std::vector<HitResult> hit_entities_with<Sphere>(const Ray &ray, float t_min,
     }
 
     const float sqrt_discriminant = glm::sqrt(discriminant);
-    float root = (h - sqrt_discriminant) / a;
-    if (root <= t_min || t_max <= root) {
-      root = (h + sqrt_discriminant) / a;
-      if (root <= t_min || t_max <= root) {
+    float root = (-h - sqrt_discriminant) / a;
+    if (!t_interval.encloses(root)) {
+      root = (-h + sqrt_discriminant) / a;
+      if (!t_interval.encloses(root)) {
         return;
       }
     }
@@ -34,7 +33,7 @@ std::vector<HitResult> hit_entities_with<Sphere>(const Ray &ray, float t_min,
     HitResult hit_result;
     hit_result.t = root;
     hit_result.point = ray.point_at(root);
-    hit_result.normal = (hit_result.point - sphere.center) / sphere.radius;
+    hit_result.normal = glm::normalize(hit_result.point - sphere.center);
     hit_result.entity = e;
     entities_hit.push_back(hit_result);
   });
