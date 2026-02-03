@@ -115,27 +115,6 @@ public:
     }
   }
 
-  template <typename Driver, typename... Rest, typename F>
-  void parallel_each(F &&f) {
-    auto &driverArr = get_component_array<Driver>();
-    const std::size_t count = driverArr.get_size();
-    const auto *entities = driverArr.get_entities();
-    Driver *comps0 = driverArr.get_components();
-    EntityManager *entity_manager = this;
-
-    std::vector<std::size_t> indices(count);
-    std::iota(indices.begin(), indices.end(), 0);
-
-    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
-                  [entity_manager, &entities, &f, &comps0](std::size_t i) mutable {
-                    Entity e{entities[i]};
-                    if (!(entity_manager->has_component<Rest>(e) && ...)) {
-                      return;
-                    }
-                    f(e, comps0[i], *entity_manager->get_component<Rest>(e)...);
-                  });
-  }
-
   template <typename T> ComponentArray<T> &get_component_array() {
     auto &base_ptr = _component_arrays[typeid(T)];
     if (!base_ptr) {

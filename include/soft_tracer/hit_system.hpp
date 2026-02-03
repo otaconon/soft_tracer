@@ -7,4 +7,4 @@
 #include "soft_tracer/interval.hpp"
 
 template <typename C>
-std::vector<HitResult> hit_entities_with(const Ray &ray, const Interval& t_intervavl);
+HitResult hit_entities_with(const Ray &ray, const Interval& t_intervavl);

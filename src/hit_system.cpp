@@ -7,9 +7,9 @@
 #include "soft_tracer/sphere.hpp"
 
 template <>
-std::vector<HitResult> hit_entities_with<Sphere>(const Ray &ray, const Interval& t_interval) {
+HitResult hit_entities_with<Sphere>(const Ray &ray, const Interval& t_interval) {
   auto &entity_manager = S_EntityManager::get_instance();
-  std::vector<HitResult> entities_hit;
+  HitResult entity_hit{};
 
   entity_manager.each<Sphere>([&](Entity e, const Sphere &sphere) {
     const glm::vec3 oc = ray.origin - sphere.center;
@@ -30,13 +30,15 @@ std::vector<HitResult> hit_entities_with<Sphere>(const Ray &ray, const Interval&
       }
     }
 
-    HitResult hit_result;
-    hit_result.t = root;
-    hit_result.point = ray.point_at(root);
-    hit_result.normal = glm::normalize(hit_result.point - sphere.center);
-    hit_result.entity = e;
-    entities_hit.push_back(hit_result);
+    if (entity_hit.t > root) {
+      HitResult hit_result;
+      hit_result.t = root;
+      hit_result.point = ray.point_at(root);
+      hit_result.normal = glm::normalize(hit_result.point - sphere.center);
+      hit_result.entity = e;
+      entity_hit = hit_result;
+    }
   });
 
-  return entities_hit;
+  return entity_hit;
 }

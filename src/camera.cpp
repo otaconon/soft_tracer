@@ -2,11 +2,11 @@
 
 #include "soft_tracer/hit_system.hpp"
 #include "soft_tracer/ray.hpp"
+#include "soft_tracer/ray_trace.hpp"
 #include "soft_tracer/sphere.hpp"
 #include "soft_tracer/utils.hpp"
 
 #include <limits>
-#include <print>
 
 Camera::Camera(uint32_t image_width, uint32_t image_height) {
   _center = glm::vec3(0.f);
@@ -27,16 +27,27 @@ Camera::Camera(uint32_t image_width, uint32_t image_height) {
   _pixel00_pos = viewport_upper_left + 0.5f * (_pixel_delta_u + _pixel_delta_v);
 }
 
-std::vector<HitResult> Camera::ray_cast(uint32_t pixel_x,
-                                        uint32_t pixel_y) const {
-  glm::vec2 offset = sample_square();
+glm::vec3 Camera::ray_cast(uint32_t pixel_x, uint32_t pixel_y) const {
+  glm::vec2 offset = utils::sample_square();
   glm::vec3 pixel_center = _pixel00_pos +
                            (pixel_x + offset.x) * _pixel_delta_u +
                            (pixel_y + offset.y) * _pixel_delta_v;
   glm::vec3 ray_direction = glm::normalize(pixel_center - _center);
   Ray ray(_center, ray_direction);
 
-  auto entities_hit = hit_entities_with<Sphere>(
-      ray, {0.0001f, std::numeric_limits<float>::infinity()});
-  return entities_hit;
+  std::vector<HitResult> entities_hit;
+  constexpr uint32_t max_steps = 20;
+  uint32_t steps = 0;
+  HitResult entity_hit = hit_entities_with<Sphere>(
+      ray, {0.001f, std::numeric_limits<float>::infinity()});
+  while (entity_hit.entity.Valid() && steps < max_steps) {
+    entities_hit.push_back(entity_hit);
+    steps++;
+    ray = {ray.point_at(entity_hit.t),
+           utils::random_on_hemisphere(entity_hit.normal)};
+    entity_hit = hit_entities_with<Sphere>(
+        ray, {0.0001f, std::numeric_limits<float>::infinity()});
+  }
+
+  return ray_trace(ray, entities_hit);
 }
