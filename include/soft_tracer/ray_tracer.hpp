@@ -5,18 +5,24 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <vector>
+#include <thread>
+
+#include "soft_tracer/camera.hpp"
 
 constexpr uint8_t g_channels = 3;
 
-class Renderer {
+class RayTracer {
 public:
-  Renderer(SDL_Window *window, uint32_t image_width, uint32_t image_height);
-  ~Renderer();
+  RayTracer(uint32_t image_width, uint32_t image_height);
+  ~RayTracer();
 
-  [[nodiscard]] SDL_Renderer *get() const noexcept { return _renderer; }
+  void render(const Camera& camera);
 
-  void begin_rendering() const;
-  void end_rendering() const;
+  void write_image(uint8_t* dst_image, int32_t pitch);
+
+  [[nodiscard]] bool is_frame_ready() const noexcept {
+    return _frame_ready;
+  }
 
   [[nodiscard]] constexpr uint32_t get_image_width() const noexcept {
     return _image_width;
@@ -29,8 +35,10 @@ public:
   void set_pixel(uint32_t x, uint32_t y, glm::vec3 color);
 
 private:
-  SDL_Renderer *_renderer;
-  SDL_Texture *_renderer_texture;
   uint32_t _image_width, _image_height;
-  std::vector<float> _pixels;
+
+  std::atomic<bool> _frame_ready;
+
+  std::vector<float> _render_buffer;
+  std::mutex _render_buffer_mutex;
 };
