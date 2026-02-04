@@ -11,7 +11,7 @@ public:
   [[nodiscard]] constexpr glm::vec3 get_center() noexcept { return _center; }
   [[nodiscard]] constexpr glm::vec3 get_origin() noexcept { return _pixel00_pos; }
 
-  glm::vec3 ray_cast(uint32_t pixel_x, uint32_t pixel_y) const;
+  void ray_cast(uint32_t pixel_x, uint32_t pixel_y) const;
 
 private:
   glm::vec3 _pixel_delta_u, _pixel_delta_v;
