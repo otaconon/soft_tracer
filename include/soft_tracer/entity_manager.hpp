@@ -115,42 +115,6 @@ public:
     }
   }
 
-  template <typename Driver, typename... Rest, typename F>
-  void par_each(F &&f) {
-    auto &driver_arr = get_component_array<Driver>();
-
-    const std::size_t count = driver_arr.get_size();
-    const unsigned int num_threads = std::thread::hardware_concurrency();
-    const std::size_t batch_size = (count + num_threads - 1) / num_threads;
-
-    const auto *entities = driver_arr.get_entities();
-    Driver *comps0 = driver_arr.get_components();
-
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
-
-    for (unsigned int t_id = 0; t_id < num_threads; ++t_id) {
-      threads.emplace_back([=, &f, this]() {
-        std::size_t start = t_id * batch_size;
-        std::size_t end = std::min(start + batch_size, count);
-
-        for (std::size_t i = start; i < end; ++i) {
-          Entity e{entities[i]};
-
-          if (!(has_component<Rest>(e) && ...)) {
-            continue;
-          }
-
-          f(e, comps0[i], *get_component<Rest>(e)..., t_id);
-        }
-      });
-    }
-
-    for (auto &th : threads) {
-      th.join();
-    }
-  }
-
   template <typename T> ComponentArray<T> &get_component_array() {
     auto &base_ptr = _component_arrays[typeid(T)];
     if (!base_ptr) {
