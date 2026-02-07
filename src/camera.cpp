@@ -1,8 +1,6 @@
 #include "soft_tracer/camera.hpp"
 
-#include "soft_tracer/s_entity_manager.hpp"
 #include "soft_tracer/ray.hpp"
-#include "soft_tracer/sphere.hpp"
 #include "soft_tracer/utils.hpp"
 
 Camera::Camera(uint32_t image_width, uint32_t image_height) {
@@ -24,14 +22,11 @@ Camera::Camera(uint32_t image_width, uint32_t image_height) {
   _pixel00_pos = viewport_upper_left + 0.5f * (_pixel_delta_u + _pixel_delta_v);
 }
 
-void Camera::ray_cast(uint32_t pixel_x, uint32_t pixel_y) const {
+Ray Camera::ray_cast(uint32_t pixel_x, uint32_t pixel_y) const {
   glm::vec2 offset = utils::sample_square();
   glm::vec3 pixel_center = _pixel00_pos +
                            (pixel_x + offset.x) * _pixel_delta_u +
                            (pixel_y + offset.y) * _pixel_delta_v;
   glm::vec3 ray_direction = glm::normalize(pixel_center - _center);
-
-  EntityManager& entity_manager = S_EntityManager::get_instance();
-  Entity entt = entity_manager.create_entity();
-  entity_manager.add_components(entt, Ray{_center, ray_direction, 0.5f, pixel_x, pixel_y});
+  return Ray{_center, ray_direction, 0.5f, pixel_x, pixel_y};
 }

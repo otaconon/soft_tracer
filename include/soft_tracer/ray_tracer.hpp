@@ -10,6 +10,10 @@
 
 #include "soft_tracer/camera.hpp"
 
+struct Tile {
+  size_t x, y, w, h;
+};
+
 constexpr uint8_t g_channels = 3;
 
 class RayTracer {
@@ -18,6 +22,8 @@ public:
   ~RayTracer();
 
   void render(const Camera& camera);
+  void render_thread_worker(const Camera& camera);
+  void trace_ray(Ray& ray);
 
   void write_image(uint8_t* dst_image, int32_t pitch);
 
@@ -38,9 +44,13 @@ public:
 
 private:
   uint32_t _image_width, _image_height;
+  uint32_t _samples{256};
+  uint32_t _steps{10};
 
   std::atomic<bool> _frame_ready;
 
+  std::vector<Tile> _tiles;
+  std::atomic<size_t> _next_tile_idx{0};
+
   std::vector<float> _render_buffer;
-  std::mutex _render_buffer_mutex;
 };

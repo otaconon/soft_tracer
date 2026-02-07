@@ -9,14 +9,14 @@
 namespace utils {
   template<typename T>
   inline T random() {
-    thread_local std::mt19937 generator(std::random_device{}());
-    thread_local std::uniform_real_distribution<T> distribution(0.0, 1.0);
+    static thread_local std::mt19937 generator(std::random_device{}());
+    static thread_local std::uniform_real_distribution<T> distribution(0.0, 1.0);
     return distribution(generator);
   }
 
   inline glm::vec3 random() {
-    thread_local std::mt19937 generator(std::random_device{}());
-    thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
+    static thread_local std::mt19937 generator(std::random_device{}());
+    static thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
     return {distribution(generator), distribution(generator), distribution(generator)};
   }
 

@@ -1,10 +1,8 @@
 #pragma once
 
-
 #include "soft_tracer/hit_result.hpp"
-#include "soft_tracer/ray.hpp"
 #include "soft_tracer/interval.hpp"
-
+#include "soft_tracer/ray.hpp"
 
 template <typename C>
-std::vector<HitResult> hit_entities_with(const Interval& t_intervavl);
+HitResult hit_entities_with(const Ray &ray, const Interval &t_intervavl);

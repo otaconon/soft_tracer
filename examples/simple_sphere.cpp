@@ -1,4 +1,5 @@
 #include "SDL3/SDL_init.h"
+#include "SDL3/SDL_render.h"
 #include "soft_tracer/s_entity_manager.hpp"
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
@@ -43,6 +44,7 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
     SDL_Log("Couldnt create SDL renderer: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
+  SDL_SetRenderVSync(renderer, 1);
   SDL_SetRenderLogicalPresentation(renderer, image_width, image_height,
                                    SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
@@ -87,16 +89,13 @@ SDL_AppResult SDL_AppIterate(void *app_state) {
   AppState *app = static_cast<AppState *>(app_state);
   RayTracer *ray_tracer = &(static_cast<AppState *>(app_state))->ray_tracer;
 
-  if (ray_tracer->is_frame_ready()) {
-    void *texture_pixels;
-    int32_t pitch = 0;
+  void *texture_pixels;
+  int32_t pitch = 0;
 
-    if (SDL_LockTexture(app->display_texture, nullptr, &texture_pixels,
-                        &pitch)) {
-      ray_tracer->write_image(static_cast<uint8_t *>(texture_pixels), pitch);
-
-      SDL_UnlockTexture(app->display_texture);
-    }
+  if (SDL_LockTexture(app->display_texture, nullptr, &texture_pixels,
+                      &pitch)) {
+    ray_tracer->write_image(static_cast<uint8_t *>(texture_pixels), pitch);
+    SDL_UnlockTexture(app->display_texture);
   }
 
   SDL_RenderClear(app->renderer);
@@ -108,5 +107,6 @@ SDL_AppResult SDL_AppIterate(void *app_state) {
 
 void SDL_AppQuit(void *app_state, SDL_AppResult result) {
   AppState *app = static_cast<AppState *>(app_state);
+  app->ray_trace_thread.request_stop();
   SDL_DestroyRenderer(app->renderer);
 }

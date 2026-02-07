@@ -1,11 +1,9 @@
 #include "soft_tracer/ray_tracer.hpp"
-#include "soft_tracer/entity_manager.hpp"
 #include "soft_tracer/hit_system.hpp"
-#include "soft_tracer/s_entity_manager.hpp"
 #include "soft_tracer/sphere.hpp"
+#include "soft_tracer/utils.hpp"
 #include <cassert>
 #include <limits>
-#include <mutex>
 
 RayTracer::RayTracer(uint32_t image_width, uint32_t image_height)
     : _image_width{image_width}, _image_height{image_height},
@@ -15,50 +13,73 @@ RayTracer::RayTracer(uint32_t image_width, uint32_t image_height)
 RayTracer::~RayTracer() {}
 
 void RayTracer::render(const Camera &camera) {
-  constexpr int samples = 4;
-  for (uint32_t y = 0; y < _image_height; ++y) {
-    for (uint32_t x = 0; x < _image_width; ++x) {
-      for (int sample = 0; sample < samples; sample++) {
-        camera.ray_cast(x, y);
-      }
+  _tiles.clear();
+  uint32_t TILE_SIZE = 32;
+  for (uint32_t y = 0; y < _image_height; y += TILE_SIZE) {
+    for (uint32_t x = 0; x < _image_width; x += TILE_SIZE) {
+      uint32_t w = std::min(TILE_SIZE, _image_width - x);
+      uint32_t h = std::min(TILE_SIZE, _image_height - y);
+      _tiles.push_back({x, y, w, h});
     }
   }
 
-  EntityManager& entity_manager = S_EntityManager::get_instance();
+  _next_tile_idx = 0;
 
-  constexpr int max_steps = 20;
-  constexpr float pixel_color_scale = 1.f / samples;
-  for (int steps = 0; steps < max_steps; steps++) {
-    std::vector<HitResult> hits = hit_entities_with<Sphere>(
-        {0.001f, std::numeric_limits<float>::infinity()});
+  unsigned int coreCount = std::thread::hardware_concurrency();
+  std::vector<std::thread> workers;
 
-    std::vector<Entity> ray_misses;
-    for (HitResult &hit : hits) {
-      if (hit.t == std::numeric_limits<float>::infinity()) {
-        ray_misses.push_back(hit.entity);
+  for (unsigned int i = 0; i < coreCount; ++i) {
+    workers.emplace_back(&RayTracer::render_thread_worker, this,
+                         std::ref(camera));
+  }
+
+  for (auto &t : workers) {
+    t.join();
+  }
+}
+
+void RayTracer::render_thread_worker(const Camera &camera) {
+  for (size_t tile_idx = _next_tile_idx.fetch_add(1); tile_idx < _tiles.size();
+       tile_idx = _next_tile_idx.fetch_add(1)) {
+    Tile t = _tiles[tile_idx];
+
+    for (size_t y = t.y; y < t.y + t.h; ++y) {
+      for (size_t x = t.x; x < t.x + t.w; ++x) {
+        for (int sample = 0; sample < _samples; ++sample) {
+          Ray ray = camera.ray_cast(x, y);
+          trace_ray(ray);
+        }
       }
     }
+  }
+}
 
-    for (const auto& e : ray_misses) {
-      Ray* ray = entity_manager.get_component<Ray>(e);
-      glm::vec3 unit_direction = glm::normalize(ray->direction);
+void RayTracer::trace_ray(Ray &ray) {
+  for (uint32_t step = 0; step < _steps; ++step) {
+    HitResult hit_result = hit_entities_with<Sphere>(
+        ray, {0.001f, std::numeric_limits<float>::infinity()});
+
+    const float color_per_sample = 1.f / _samples;
+    if (hit_result.t != std::numeric_limits<float>::infinity()) {
+      ray.origin = hit_result.point;
+      ray.direction = utils::random_on_hemisphere(hit_result.normal);
+      ray.throughput *= 0.5f;
+    } else {
+      glm::vec3 unit_direction = glm::normalize(ray.direction);
       float a = 0.5 * (unit_direction.y + 1.0);
       glm::vec3 color =
           (1.0f - a) * glm::vec3{1.0, 1.0, 1.0} + a * glm::vec3{0.5, 0.7, 1.0};
 
-      add_to_pixel(ray->image_x, ray->image_y, ray->throughput * pixel_color_scale * color);
+      add_to_pixel(ray.image_x, ray.image_y,
+                   ray.throughput * color_per_sample * color);
+      return;
     }
-
-    _frame_ready = true;
   }
 }
 
 void RayTracer::write_image(uint8_t *dst_image, int32_t pitch) {
-  std::lock_guard<std::mutex> guard(_render_buffer_mutex);
-
   const size_t src_row_elements = _image_width * g_channels;
   const size_t src_row_size = src_row_elements * sizeof(float);
-
   const float *src = _render_buffer.data();
 
   for (int y = 0; y < _image_height; ++y) {
@@ -69,7 +90,6 @@ void RayTracer::write_image(uint8_t *dst_image, int32_t pitch) {
 }
 
 void RayTracer::set_pixel(uint32_t x, uint32_t y, float r, float g, float b) {
-  std::lock_guard<std::mutex> guard(_render_buffer_mutex);
   const uint32_t idx = (y * _image_width + x) * g_channels;
   assert(idx < _render_buffer.size() && "Pixel index out of range");
 
@@ -79,7 +99,6 @@ void RayTracer::set_pixel(uint32_t x, uint32_t y, float r, float g, float b) {
 }
 
 void RayTracer::set_pixel(uint32_t x, uint32_t y, glm::vec3 color) {
-  std::lock_guard<std::mutex> guard(_render_buffer_mutex);
   const size_t idx = (y * _image_width + x) * g_channels;
   assert(idx < _render_buffer.size() && "Pixel index out of range");
 
@@ -89,7 +108,6 @@ void RayTracer::set_pixel(uint32_t x, uint32_t y, glm::vec3 color) {
 }
 
 void RayTracer::add_to_pixel(uint32_t x, uint32_t y, glm::vec3 color) {
-  std::lock_guard<std::mutex> guard(_render_buffer_mutex);
   const size_t idx = (y * _image_width + x) * g_channels;
   assert(idx < _render_buffer.size() && "Pixel index out of range");
 
