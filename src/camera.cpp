@@ -28,5 +28,5 @@ Ray Camera::ray_cast(uint32_t pixel_x, uint32_t pixel_y) const {
                            (pixel_x + offset.x) * _pixel_delta_u +
                            (pixel_y + offset.y) * _pixel_delta_v;
   glm::vec3 ray_direction = glm::normalize(pixel_center - _center);
-  return Ray{_center, ray_direction, 0.5f, pixel_x, pixel_y};
+  return Ray{_center, ray_direction, {1.f, 1.f, 1.f}, pixel_x, pixel_y};
 }

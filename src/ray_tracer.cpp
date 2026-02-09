@@ -1,5 +1,9 @@
 #include "soft_tracer/ray_tracer.hpp"
+#include "glm/gtc/epsilon.hpp"
 #include "soft_tracer/hit_system.hpp"
+#include "soft_tracer/lambertian_material.hpp"
+#include "soft_tracer/metal_material.hpp"
+#include "soft_tracer/s_entity_manager.hpp"
 #include "soft_tracer/sphere.hpp"
 #include "soft_tracer/utils.hpp"
 #include <cassert>
@@ -25,10 +29,10 @@ void RayTracer::render(const Camera &camera) {
 
   _next_tile_idx = 0;
 
-  unsigned int coreCount = std::thread::hardware_concurrency();
+  unsigned int core_count = std::thread::hardware_concurrency();
   std::vector<std::thread> workers;
 
-  for (unsigned int i = 0; i < coreCount; ++i) {
+  for (unsigned int i = 0; i < core_count; ++i) {
     workers.emplace_back(&RayTracer::render_thread_worker, this,
                          std::ref(camera));
   }
@@ -55,15 +59,14 @@ void RayTracer::render_thread_worker(const Camera &camera) {
 }
 
 void RayTracer::trace_ray(Ray &ray) {
+  EntityManager &entity_manager = S_EntityManager::get_instance();
   for (uint32_t step = 0; step < _steps; ++step) {
     HitResult hit_result = hit_entities_with<Sphere>(
         ray, {0.001f, std::numeric_limits<float>::infinity()});
 
     const float color_per_sample = 1.f / _samples;
     if (hit_result.t != std::numeric_limits<float>::infinity()) {
-      ray.origin = hit_result.point;
-      ray.direction = utils::random_on_hemisphere(hit_result.normal);
-      ray.throughput *= 0.5f;
+      scatter_ray(ray, hit_result);
     } else {
       glm::vec3 unit_direction = glm::normalize(ray.direction);
       float a = 0.5 * (unit_direction.y + 1.0);
@@ -71,9 +74,28 @@ void RayTracer::trace_ray(Ray &ray) {
           (1.0f - a) * glm::vec3{1.0, 1.0, 1.0} + a * glm::vec3{0.5, 0.7, 1.0};
 
       add_to_pixel(ray.image_x, ray.image_y,
-                   ray.throughput * color_per_sample * color);
+                   ray.attenuation * color_per_sample * color);
       return;
     }
+  }
+}
+
+void RayTracer::scatter_ray(Ray &ray, HitResult &hit_result) {
+  EntityManager &entity_manager = S_EntityManager::get_instance();
+  ray.origin = hit_result.point;
+
+  if (auto material = entity_manager.get_component<LambertianMaterial>(
+          hit_result.entity_hit)) {
+    ray.direction = glm::normalize(hit_result.normal + utils::random_unit());
+    ray.attenuation *= material->albedo;
+  } else if (auto material = entity_manager.get_component<MetalMaterial>(
+                 hit_result.entity_hit)) {
+    ray.direction = ray.reflect(hit_result.normal);
+    ray.attenuation *= material->albedo;
+  }
+
+  if (glm::all(glm::epsilonEqual(ray.direction, glm::vec3(0.0f), 1e-8f))) {
+    ray.direction = hit_result.normal;
   }
 }
 

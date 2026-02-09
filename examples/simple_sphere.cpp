@@ -1,5 +1,7 @@
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_render.h"
+#include "soft_tracer/lambertian_material.hpp"
+#include "soft_tracer/metal_material.hpp"
 #include "soft_tracer/s_entity_manager.hpp"
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
@@ -50,8 +52,8 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
 
   SDL_Texture *texture;
   if (!(texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB96_FLOAT,
-                                   SDL_TEXTUREACCESS_STREAMING, image_width,
-                                   image_height))) {
+                                    SDL_TEXTUREACCESS_STREAMING, image_width,
+                                    image_height))) {
     SDL_Log("Couldnt create SDL texture: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
@@ -68,12 +70,18 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
   *app_state = app;
 
   auto &entity_manager = S_EntityManager::get_instance();
-  for (int i = 0; i <= 0; i++) {
-    Entity sphere = entity_manager.create_entity();
-    entity_manager.add_components(sphere, Sphere{{i, 0, -1}, 0.5f});
-  }
-  Entity floor = entity_manager.create_entity();
-  entity_manager.add_components(floor, Sphere{{0, -100.5f, -1.f}, 100.f});
+  entity_manager.add_components(entity_manager.create_entity(),
+                                Sphere{{-1, 0, -1}, 0.5f},
+                                MetalMaterial{{0.4f, 0.2f, 0.5f}});
+  entity_manager.add_components(entity_manager.create_entity(),
+                                Sphere{{0, 0, -1}, 0.5f},
+                                LambertianMaterial{{0.2f, 0.5f, 0.4f}});
+  entity_manager.add_components(entity_manager.create_entity(),
+                                Sphere{{1, 0, -1}, 0.5f},
+                                MetalMaterial{{0.5f, 0.2f, 0.4f}});
+  entity_manager.add_components(entity_manager.create_entity(),
+                                Sphere{{0, -100.5f, -1.f}, 100.f},
+                                LambertianMaterial{{0.1f, 0.1f, 0.1f}});
 
   return SDL_APP_CONTINUE;
 }
@@ -92,8 +100,7 @@ SDL_AppResult SDL_AppIterate(void *app_state) {
   void *texture_pixels;
   int32_t pitch = 0;
 
-  if (SDL_LockTexture(app->display_texture, nullptr, &texture_pixels,
-                      &pitch)) {
+  if (SDL_LockTexture(app->display_texture, nullptr, &texture_pixels, &pitch)) {
     ray_tracer->write_image(static_cast<uint8_t *>(texture_pixels), pitch);
     SDL_UnlockTexture(app->display_texture);
   }

@@ -95,7 +95,7 @@ public:
 
   // Returns nullptr if there is no such entity
   T *get_data(uint32_t entity_id) {
-    if (entity_id >= _entity_to_index.size()) {
+    if (!has_data(entity_id)) {
       return nullptr;
     }
 

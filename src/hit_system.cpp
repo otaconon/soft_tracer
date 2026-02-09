@@ -36,6 +36,7 @@ HitResult hit_entities_with<Sphere>(const Ray &ray, const Interval &t_interval) 
       hit_result.t = root;
       hit_result.point = ray.point_at(root);
       hit_result.normal = glm::normalize(hit_result.point - sphere.center);
+      hit_result.entity_hit = e;
     }
   });
 
