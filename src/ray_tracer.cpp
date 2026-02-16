@@ -1,5 +1,7 @@
 #include "soft_tracer/ray_tracer.hpp"
+#include "glm/geometric.hpp"
 #include "glm/gtc/epsilon.hpp"
+#include "soft_tracer/dielectric_material.hpp"
 #include "soft_tracer/hit_system.hpp"
 #include "soft_tracer/lambertian_material.hpp"
 #include "soft_tracer/metal_material.hpp"
@@ -29,7 +31,7 @@ void RayTracer::render(const Camera &camera) {
 
   _next_tile_idx = 0;
 
-  unsigned int core_count = std::thread::hardware_concurrency();
+  unsigned int core_count = std::thread::hardware_concurrency()/2;
   std::vector<std::thread> workers;
 
   for (unsigned int i = 0; i < core_count; ++i) {
@@ -66,7 +68,9 @@ void RayTracer::trace_ray(Ray &ray) {
 
     const float color_per_sample = 1.f / _samples;
     if (hit_result.t != std::numeric_limits<float>::infinity()) {
-      scatter_ray(ray, hit_result);
+      if (!scatter_ray(ray, hit_result)) {
+        return;
+      }
     } else {
       glm::vec3 unit_direction = glm::normalize(ray.direction);
       float a = 0.5 * (unit_direction.y + 1.0);
@@ -80,7 +84,7 @@ void RayTracer::trace_ray(Ray &ray) {
   }
 }
 
-void RayTracer::scatter_ray(Ray &ray, HitResult &hit_result) {
+bool RayTracer::scatter_ray(Ray &ray, HitResult &hit_result) {
   EntityManager &entity_manager = S_EntityManager::get_instance();
   ray.origin = hit_result.point;
 
@@ -91,12 +95,33 @@ void RayTracer::scatter_ray(Ray &ray, HitResult &hit_result) {
   } else if (auto material = entity_manager.get_component<MetalMaterial>(
                  hit_result.entity_hit)) {
     ray.direction = ray.reflect(hit_result.normal);
+    ray.direction =
+        glm::normalize(ray.direction) + (material->fuzz * utils::random_unit());
     ray.attenuation *= material->albedo;
+    if (!(glm::dot(ray.direction, hit_result.normal) > 0)) {
+      return false;
+    }
+  } else if (auto material = entity_manager.get_component<DielectricMaterial>(
+                 hit_result.entity_hit)) {
+    float refractive_index;
+    glm::vec3 outward_normal;
+    if (glm::dot(ray.direction, hit_result.normal) > 0) {
+      refractive_index = material->refractive_index;
+      outward_normal = -hit_result.normal;
+    } else {
+      refractive_index = 1.f / material->refractive_index;
+      outward_normal = -hit_result.normal;
+    }
+
+    ray.direction = ray.refract(outward_normal, refractive_index);
+    ray.attenuation = {1.f, 1.f, 1.f};
   }
 
   if (glm::all(glm::epsilonEqual(ray.direction, glm::vec3(0.0f), 1e-8f))) {
     ray.direction = hit_result.normal;
   }
+
+  return true;
 }
 
 void RayTracer::write_image(uint8_t *dst_image, int32_t pitch) {

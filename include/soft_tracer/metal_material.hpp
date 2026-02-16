@@ -4,4 +4,5 @@
 
 struct MetalMaterial {
   glm::vec3 albedo;
+  float fuzz;
 };

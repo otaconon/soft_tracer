@@ -1,5 +1,6 @@
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_render.h"
+#include "soft_tracer/dielectric_material.hpp"
 #include "soft_tracer/lambertian_material.hpp"
 #include "soft_tracer/metal_material.hpp"
 #include "soft_tracer/s_entity_manager.hpp"
@@ -72,13 +73,13 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
   auto &entity_manager = S_EntityManager::get_instance();
   entity_manager.add_components(entity_manager.create_entity(),
                                 Sphere{{-1, 0, -1}, 0.5f},
-                                MetalMaterial{{0.4f, 0.2f, 0.5f}});
+                                MetalMaterial{{0.4f, 0.2f, 0.5f}, 0.3f});
   entity_manager.add_components(entity_manager.create_entity(),
                                 Sphere{{0, 0, -1}, 0.5f},
                                 LambertianMaterial{{0.2f, 0.5f, 0.4f}});
   entity_manager.add_components(entity_manager.create_entity(),
                                 Sphere{{1, 0, -1}, 0.5f},
-                                MetalMaterial{{0.5f, 0.2f, 0.4f}});
+                                DielectricMaterial{1.5f});
   entity_manager.add_components(entity_manager.create_entity(),
                                 Sphere{{0, -100.5f, -1.f}, 100.f},
                                 LambertianMaterial{{0.1f, 0.1f, 0.1f}});

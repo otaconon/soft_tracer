@@ -24,7 +24,7 @@ public:
   void render(const Camera& camera);
   void render_thread_worker(const Camera& camera);
   void trace_ray(Ray& ray);
-  void scatter_ray(Ray& ray, HitResult& hit_result);
+  bool scatter_ray(Ray& ray, HitResult& hit_result);
 
   void write_image(uint8_t* dst_image, int32_t pitch);
 
@@ -45,7 +45,7 @@ public:
 
 private:
   uint32_t _image_width, _image_height;
-  uint32_t _samples{512};
+  uint32_t _samples{64};
   uint32_t _steps{10};
 
   std::atomic<bool> _frame_ready;
