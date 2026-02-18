@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <limits>
 
-#include "soft_tracer/entitiy.hpp"
+#include "soft_tracer/ecs/entitiy.hpp"
 #include "soft_tracer/ray.hpp"
 
 struct HitResult {

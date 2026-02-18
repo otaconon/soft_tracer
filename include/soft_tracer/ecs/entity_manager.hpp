@@ -1,17 +1,14 @@
 #pragma once
 
-#include "soft_tracer/component_array.hpp"
-#include "soft_tracer/entitiy.hpp"
+#include "component_array.hpp"
+#include "entitiy.hpp"
 
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <typeindex>
 #include <unordered_map>
 #include <unordered_set>
-#include <ranges>
-#include <algorithm>
-#include <numeric>
-#include <execution>
 
 class EntityManager {
 public:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "soft_tracer/entity_manager.hpp"
+#include "entity_manager.hpp"
 
 class S_EntityManager {
 public:

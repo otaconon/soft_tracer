@@ -1,8 +1,7 @@
 #pragma once
 
+#include "soft_tracer/ray.hpp"
 #include <glm/glm.hpp>
-
-#include "soft_tracer/hit_result.hpp"
 
 class Camera {
 public:

@@ -1,9 +1,11 @@
 #include "soft_tracer/hit_system.hpp"
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/exponential.hpp"
 #include "glm/gtx/norm.hpp"
+
 #include "soft_tracer/hit_result.hpp"
-#include "soft_tracer/s_entity_manager.hpp"
+#include "soft_tracer/ecs/s_entity_manager.hpp"
 #include "soft_tracer/sphere.hpp"
 #include "soft_tracer/utils.hpp"
 

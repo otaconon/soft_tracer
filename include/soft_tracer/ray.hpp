@@ -1,7 +1,7 @@
 #pragma once
 
-#include "soft_tracer/entitiy.hpp"
-#include "soft_tracer/utils.hpp"
+#include "utils.hpp"
+
 #include <glm/glm.hpp>
 
 struct Ray {
