@@ -4,6 +4,9 @@
 #include "ray.hpp"
 #include "soft_tracer/material.hpp"
 
-bool scatter_dielectric(Ray &ray, HitResult &hit_result, Material &material);
-bool scatter_lambertian(Ray &ray, HitResult &hit_result, Material &material);
-bool scatter_metallic(Ray &ray, HitResult &hit_result, Material &material);
+[[nodiscard]] bool scatter_dielectric(Ray &ray, const HitResult &hit_result,
+                                      const Material &material);
+[[nodiscard]] bool scatter_lambertian(Ray &ray, const HitResult &hit_result,
+                                      const Material &material);
+[[nodiscard]] bool scatter_metallic(Ray &ray, const HitResult &hit_result,
+                                    const Material &material);

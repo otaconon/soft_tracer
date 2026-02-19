@@ -4,17 +4,16 @@
 #include "glm/exponential.hpp"
 #include "glm/gtx/norm.hpp"
 
-#include "soft_tracer/hit_result.hpp"
 #include "soft_tracer/ecs/s_entity_manager.hpp"
+#include "soft_tracer/hit_result.hpp"
 #include "soft_tracer/sphere.hpp"
-#include "soft_tracer/utils.hpp"
 
 template <>
 HitResult hit_entities_with<Sphere>(const Ray &ray, const Interval &t_interval) {
   auto &entity_manager = S_EntityManager::get_instance();
 
   HitResult hit_result{};
-  entity_manager.each<Sphere>([&](Entity e, Sphere &sphere) {
+  entity_manager.each<Sphere>([&](const Entity e, const Sphere &sphere) {
     const glm::vec3 oc = ray.origin - sphere.center;
     const float a = glm::length2(ray.direction);
     const float h = dot(ray.direction, oc);

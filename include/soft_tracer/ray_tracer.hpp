@@ -22,9 +22,9 @@ public:
   void render(const Camera& camera);
   void render_thread_worker(const Camera& camera);
   void trace_ray(Ray& ray);
-  static bool scatter_ray(Ray& ray, HitResult& hit_result);
+  static bool scatter_ray(Ray& ray, const HitResult& hit_result);
 
-  void write_image(uint8_t* dst_image, int32_t pitch);
+  void write_image(uint8_t* dst_image, int32_t pitch) const;
 
   [[nodiscard]] bool is_frame_ready() const noexcept {
     return _frame_ready;

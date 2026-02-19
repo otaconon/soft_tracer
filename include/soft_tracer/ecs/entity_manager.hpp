@@ -11,15 +11,14 @@
 #include <unordered_set>
 
 class EntityManager {
-public:
+  public:
   EntityManager() { _singleton_entity = create_entity(); }
 
   void clear() {
     std::vector<std::uint32_t> ids;
     ids.reserve(_entities.size() + _prototype_entities.size());
     ids.insert(ids.end(), _entities.begin(), _entities.end());
-    ids.insert(ids.end(), _prototype_entities.begin(),
-               _prototype_entities.end());
+    ids.insert(ids.end(), _prototype_entities.begin(), _prototype_entities.end());
 
     if (_singleton_entity && !_entities.contains(_singleton_entity->id) &&
         !_prototype_entities.contains(_singleton_entity->id)) {
@@ -27,7 +26,7 @@ public:
     }
 
     for (const std::uint32_t id : ids) {
-      remove_entity(Entity{id});
+      remove_entity(Entity{ id });
     }
 
     _component_arrays.clear();
@@ -41,18 +40,18 @@ public:
   }
 
   Entity create_entity() {
-    const Entity entity{_next_entity_id++};
+    const Entity entity{ _next_entity_id++ };
     _entities.insert(entity.id);
     return entity;
   }
 
   Entity create_prototype_entity() {
-    const Entity entity{_next_entity_id++};
+    const Entity entity{ _next_entity_id++ };
     _prototype_entities.insert(entity.id);
     return entity;
   }
 
-  Entity clone(const Entity& src_entity) {
+  Entity clone(const Entity &src_entity) {
     const Entity dst_entity = create_entity();
 
     for (auto &componentType : _entity_components[src_entity.id]) {
@@ -70,20 +69,21 @@ public:
   }
 
   template <typename... Ts>
-  void add_components(const Entity& entity, Ts &&...components) {
+  void add_components(const Entity &entity, Ts &&...components) {
     (add_component<std::decay_t<Ts>>(entity, std::forward<Ts>(components)), ...);
   }
 
-  template <typename... Ts> void remove_components(const Entity& entity) {
+  template <typename... Ts>
+  void remove_components(const Entity &entity) {
     (remove_component<std::decay_t<Ts>>(entity), ...);
   }
 
-  template <typename T> void add_singleton_component(T &&component) {
-    add_component<std::decay_t<T>>(_singleton_entity.value(),
-                                  std::forward<T>(component));
+  template <typename T>
+  void add_singleton_component(T &&component) {
+    add_component<std::decay_t<T>>(_singleton_entity.value(), std::forward<T>(component));
   }
 
-  void remove_entity(const Entity& entity) {
+  void remove_entity(const Entity &entity) {
     // it's ok to just call the erases, if the entity doesn't exist, nothing
     // will happen
     _entities.erase(entity.id);
@@ -94,7 +94,8 @@ public:
     }
   }
 
-  template <typename Driver, typename... Rest, typename F> void each(F &&f) {
+  template <typename Driver, typename... Rest, typename F>
+  void each(F &&f) {
     auto &driver_arr = get_component_array<Driver>();
 
     const std::size_t count = driver_arr.get_size();
@@ -102,7 +103,7 @@ public:
     Driver *comps0 = driver_arr.get_components();
 
     for (std::size_t i = 0; i < count; ++i) {
-      Entity e{entities[i]};
+      Entity e{ entities[i] };
 
       if (!(has_component<Rest>(e) && ...)) {
         continue;
@@ -112,7 +113,8 @@ public:
     }
   }
 
-  template <typename T> ComponentArray<T> &get_component_array() {
+  template <typename T>
+  ComponentArray<T> &get_component_array() {
     auto &base_ptr = _component_arrays[typeid(T)];
     if (!base_ptr) {
       base_ptr = std::make_unique<ComponentArray<T>>();
@@ -123,33 +125,39 @@ public:
 
   // Returns pointer to the component if entity has it, otherwise returns
   // nullptr
-  template <typename T> T *get_component(const Entity& entity) {
+  template <typename T>
+  T *get_component(const Entity &entity) {
     return get_component_array<T>().get_data(entity.id);
   }
 
   // Returns pointer to the singleton component if entity has it, otherwise
   // returns nullptr
-  template <typename T> T *get_singleton_component() {
+  template <typename T>
+  T *get_singleton_component() {
     return get_component<T>(_singleton_entity.value());
   }
 
-  template <typename... Ts> bool has_components(const Entity& entity) {
+  template <typename... Ts>
+  bool has_components(const Entity &entity) {
     return (has_components<Ts>(entity) && ...);
   }
 
-private:
-  template <typename T> void add_component(const Entity& entity, T &&component) {
+  private:
+  template <typename T>
+  void add_component(const Entity &entity, T &&component) {
     using DT = std::decay_t<T>;
     get_component_array<DT>().insert_data(entity.id, std::forward<T>(component));
     _entity_components[entity.id].insert(std::type_index(typeid(DT)));
   }
 
-  template <typename T> void remove_component(const Entity& entity) {
+  template <typename T>
+  void remove_component(const Entity &entity) {
     using DT = std::decay_t<T>;
     get_component_array<DT>().remove_data(entity.id);
   }
 
-  template <typename T> bool has_component(const Entity& entity) {
+  template <typename T>
+  bool has_component(const Entity &entity) {
     return get_component_array<T>().has_data(entity.id);
   }
 
@@ -157,10 +165,8 @@ private:
   std::unordered_set<std::uint32_t> _entities;
   // prototype entities are meant to not be updated by systems
   std::unordered_set<std::uint32_t> _prototype_entities;
-  std::unordered_map<std::type_index, std::unique_ptr<IComponentArray>>
-      _component_arrays;
-  std::unordered_map<std::uint32_t, std::unordered_set<std::type_index>>
-      _entity_components;
+  std::unordered_map<std::type_index, std::unique_ptr<IComponentArray>> _component_arrays;
+  std::unordered_map<std::uint32_t, std::unordered_set<std::type_index>> _entity_components;
 
   std::optional<Entity> _singleton_entity;
 };

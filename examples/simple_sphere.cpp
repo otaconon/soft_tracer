@@ -1,12 +1,12 @@
 
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_render.h>
-#include <SDL3/SDL_init.h>
 
-#include <soft_tracer/material.hpp>
 #include <soft_tracer/ecs/s_entity_manager.hpp>
+#include <soft_tracer/material.hpp>
 
 #include <soft_tracer/camera.hpp>
 #include <soft_tracer/ray_tracer.hpp>
@@ -36,8 +36,7 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
   constexpr int image_height = static_cast<int>(image_width / aspect_ratio);
 
   SDL_Window *window;
-  if (!(window =
-            SDL_CreateWindow("soft tracer", image_width, image_height, 0))) {
+  if (!(window = SDL_CreateWindow("soft tracer", image_width, image_height, 0))) {
     SDL_Log("Couldnt create SDL window: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
@@ -48,41 +47,36 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
     return SDL_APP_FAILURE;
   }
   SDL_SetRenderVSync(renderer, 1);
-  SDL_SetRenderLogicalPresentation(renderer, image_width, image_height,
-                                   SDL_LOGICAL_PRESENTATION_LETTERBOX);
+  SDL_SetRenderLogicalPresentation(
+      renderer, image_width, image_height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
   SDL_Texture *texture;
   if (!(texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB96_FLOAT,
-                                    SDL_TEXTUREACCESS_STREAMING, image_width,
-                                    image_height))) {
+            SDL_TEXTUREACCESS_STREAMING, image_width, image_height))) {
     SDL_Log("Couldnt create SDL texture: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
 
-  AppState *app = new AppState{.width = image_width,
-                               .height = image_height,
-                               .window = window,
-                               .renderer = renderer,
-                               .display_texture = texture,
-                               .ray_tracer{image_width, image_height},
-                               .camera{image_width, image_height}};
+  AppState *app = new AppState{ .width = image_width,
+    .height = image_height,
+    .window = window,
+    .renderer = renderer,
+    .display_texture = texture,
+    .ray_tracer{ image_width, image_height },
+    .camera{ image_width, image_height } };
   app->ray_trace_thread =
       std::jthread(&RayTracer::render, &app->ray_tracer, std::ref(app->camera));
   *app_state = app;
 
   auto &entity_manager = S_EntityManager::get_instance();
+  entity_manager.add_components(entity_manager.create_entity(), Sphere{ { -1, 0, -1 }, 0.5f },
+      make_metallic({ 0.4f, 0.2f, 0.5f }, 0.3f));
+  entity_manager.add_components(entity_manager.create_entity(), Sphere{ { 0, 0, -1 }, 0.5f },
+      make_lambertian({ 0.2f, 0.5f, 0.4f }));
+  entity_manager.add_components(entity_manager.create_entity(), Sphere{ { 1, 0, -1 }, 0.5f },
+      make_dielectric({ 0.f, 0.f, 0.f }, 1.f / 1.33f));
   entity_manager.add_components(entity_manager.create_entity(),
-                                Sphere{{-1, 0, -1}, 0.5f},
-                                make_metallic({0.4f, 0.2f, 0.5f}, 0.3f));
-  entity_manager.add_components(entity_manager.create_entity(),
-                                Sphere{{0, 0, -1}, 0.5f},
-                                make_lambertian({0.2f, 0.5f, 0.4f}));
-  entity_manager.add_components(entity_manager.create_entity(),
-                                Sphere{{1, 0, -1}, 0.5f},
-                                make_dielectric({0.f, 0.f, 0.f}, 1.5f));
-  entity_manager.add_components(entity_manager.create_entity(),
-                                Sphere{{0, -100.5f, -1.f}, 100.f},
-                                make_lambertian({0.1f, 0.1f, 0.1f}));
+      Sphere{ { 0, -100.5f, -1.f }, 100.f }, make_lambertian({ 0.1f, 0.1f, 0.1f }));
 
   return SDL_APP_CONTINUE;
 }

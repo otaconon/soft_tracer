@@ -4,36 +4,32 @@
 #include <vector>
 
 class IComponentArray {
-public:
+  public:
   virtual ~IComponentArray() = default;
 
   virtual bool remove_data(uint32_t entity_id) = 0;
-  virtual bool clone_component(uint32_t src_entity_id,
-                              uint32_t dst_entity_id) = 0;
+  virtual bool clone_component(uint32_t src_entity_id, uint32_t dst_entity_id) = 0;
 };
 
-template <typename T> class ComponentArray final : public IComponentArray {
-public:
-  [[nodiscard]] const uint32_t *get_entities() const {
-    return _index_to_entity.data();
+template <typename T>
+class ComponentArray final : public IComponentArray {
+  public:
+  [[nodiscard]] uint32_t *get_entities() noexcept { return _index_to_entity.data(); }
+
+  [[nodiscard]] size_t get_size() const noexcept { return _size; }
+
+  [[nodiscard]] T *get_components() noexcept { return _components.data(); }
+
+  [[nodiscard]] bool has_data(const uint32_t entity_id) const {
+    return entity_id < _entity_to_index.size() && _entity_to_index[entity_id] < _size;
   }
 
-  [[nodiscard]] size_t get_size() const { return _size; }
-
-  T *get_components() { return _components.data(); }
-
-  [[nodiscard]] bool has_data(uint32_t entity_id) const {
-    return entity_id < _entity_to_index.size() &&
-           _entity_to_index[entity_id] < _size;
-  }
-
-  // Returns true if insertion was successful and false otherwise
-  bool insert_data(uint32_t entity_id, T &&component) {
+  void insert_data(const uint32_t entity_id, T &&component) {
     // Entity already has this component type
     if (has_data(entity_id)) {
       size_t index = _entity_to_index[entity_id];
       _components[index] = std::move(component);
-      return true;
+      return;
     }
 
     // Grow the vector
@@ -55,12 +51,10 @@ public:
       _components.push_back(std::move(component));
     }
     _size++;
-    return true;
   }
 
   // returns true if cloning was successful and false otherwise
-  bool clone_component(uint32_t src_entity_id,
-                      uint32_t dst_entity_id) override {
+  bool clone_component(const uint32_t src_entity_id, const uint32_t dst_entity_id) override {
     if (src_entity_id >= _size) {
       return false;
     }
@@ -73,7 +67,7 @@ public:
   }
 
   // Returns true there was an entity to remove and false otherwise
-  bool remove_data(uint32_t entity_id) override {
+  bool remove_data(const uint32_t entity_id) override {
     if (!has_data(entity_id)) {
       return false;
     }
@@ -83,7 +77,7 @@ public:
 
     if (removed_idx != last_idx) {
       _components[removed_idx] = std::move(_components[last_idx]);
-      uint32_t last_entity = _index_to_entity[last_idx];
+      const uint32_t last_entity = _index_to_entity[last_idx];
       _entity_to_index[last_entity] = removed_idx;
       _index_to_entity[removed_idx] = last_entity;
     }
@@ -94,7 +88,7 @@ public:
   }
 
   // Returns nullptr if there is no such entity
-  T *get_data(uint32_t entity_id) {
+  T *get_data(const uint32_t entity_id) {
     if (!has_data(entity_id)) {
       return nullptr;
     }
@@ -102,7 +96,7 @@ public:
     return &_components[_entity_to_index[entity_id]];
   }
 
-private:
+  private:
   std::vector<T> _components{};
   // Used for accessing components given entity id
   std::vector<size_t> _entity_to_index;

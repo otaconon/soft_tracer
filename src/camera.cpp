@@ -4,8 +4,6 @@
 #include "soft_tracer/utils.hpp"
 
 Camera::Camera(uint32_t image_width, uint32_t image_height) {
-  _center = glm::vec3(0.f);
-
   constexpr float focal_length = 1.0f;
   constexpr float viewport_height = 2.0f;
   float viewport_width =
@@ -22,11 +20,11 @@ Camera::Camera(uint32_t image_width, uint32_t image_height) {
   _pixel00_pos = viewport_upper_left + 0.5f * (_pixel_delta_u + _pixel_delta_v);
 }
 
-Ray Camera::ray_cast(uint32_t pixel_x, uint32_t pixel_y) const {
-  glm::vec2 offset = utils::sample_square();
-  glm::vec3 pixel_center = _pixel00_pos +
+Ray Camera::ray_cast(const uint32_t pixel_x, const uint32_t pixel_y) const {
+  const glm::vec2 offset = utils::sample_square();
+  const glm::vec3 pixel_center = _pixel00_pos +
                            (pixel_x + offset.x) * _pixel_delta_u +
                            (pixel_y + offset.y) * _pixel_delta_v;
-  glm::vec3 ray_direction = glm::normalize(pixel_center - _center);
+  const glm::vec3 ray_direction = glm::normalize(pixel_center - _center);
   return Ray{_center, ray_direction, {1.f, 1.f, 1.f}, pixel_x, pixel_y};
 }

@@ -12,7 +12,7 @@ AttributeMacros:
   - _FORCE_INLINE_
   - _NO_INLINE_
 BreakConstructorInitializers: AfterColon
-ColumnLimit: 99
+ColumnLimit: 80
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: false
@@ -24,7 +24,6 @@ IncludeCategories:
   - Regex: ^<.*>$
     Priority: 3
 IndentCaseLabels: true
-IndentWidth: 4
 InsertBraces: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 ObjCBlockIndentWidth: 4
@@ -33,6 +32,6 @@ RemoveSemicolon: true
 SpacesInLineCommentPrefix:
   Minimum: 0
   Maximum: -1
-Standard: c++23
+Standard: Latest
 TabWidth: 2
-UseTab: Always
+BreakTemplateDeclarations: Yes
