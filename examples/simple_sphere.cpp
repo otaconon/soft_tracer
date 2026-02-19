@@ -64,6 +64,9 @@ SDL_AppResult SDL_AppInit(void **app_state, int argc, char *argv[]) {
     .display_texture = texture,
     .ray_tracer{ image_width, image_height },
     .camera{ image_width, image_height } };
+
+  app->camera.set_position(glm::vec3{1.f});
+  app->camera.look_at(glm::vec3{0.f});
   app->ray_trace_thread =
       std::jthread(&RayTracer::render, &app->ray_tracer, std::ref(app->camera));
   *app_state = app;
