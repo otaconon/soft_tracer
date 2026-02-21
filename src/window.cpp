@@ -9,12 +9,12 @@ SDL_AppResult Window::init(const uint32_t width, const uint32_t height) {
     return SDL_APP_FAILURE;
   }
 
-  if (!(_window = SDL_CreateWindow("soft tracer", width, height, 0))) {
+  if (!((_window = SDL_CreateWindow("soft tracer", width, height, 0)))) {
     SDL_Log("Couldnt create SDL window: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
 
-  if (!(_renderer = SDL_CreateRenderer(_window, nullptr))) {
+  if (!((_renderer = SDL_CreateRenderer(_window, nullptr)))) {
     SDL_Log("Couldnt create SDL renderer: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
@@ -22,8 +22,8 @@ SDL_AppResult Window::init(const uint32_t width, const uint32_t height) {
   SDL_SetRenderLogicalPresentation(
       _renderer, width, height, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-  if (!(_display_texture = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGBA128_FLOAT,
-            SDL_TEXTUREACCESS_STREAMING, width, height))) {
+  if (!((_display_texture = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGBA128_FLOAT,
+            SDL_TEXTUREACCESS_STREAMING, width, height)))) {
     SDL_Log("Couldnt create SDL texture: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
@@ -42,7 +42,7 @@ SDL_AppResult Window::render(
   return SDL_APP_CONTINUE;
 }
 
-void Window::shutdown() {
+void Window::shutdown() const {
   if (_renderer) {
     SDL_DestroyRenderer(_renderer);
   }

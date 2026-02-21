@@ -2,9 +2,9 @@
 #include "SDL3/SDL_init.h"
 
 App::App(const uint32_t render_width, const uint32_t render_height) :
-    _camera{ render_width, render_height },
-    _ray_tracer{ render_width, render_height } {
-  _camera.set_position(glm::vec3{ 1.f });
+    _ray_tracer{ render_width, render_height },
+    _camera{ render_width, render_height } {
+  _camera.set_position(glm::vec3{ 0.f, 1.f, 2.f });
   _camera.look_at(glm::vec3{ 0.f });
   _ray_tracing_thread =
       std::jthread(&RayTracer::render, &_ray_tracer, std::ref(_camera));
@@ -20,7 +20,7 @@ App::~App() {
   _window.shutdown();
 }
 
-SDL_AppResult App::HandleEvent(const SDL_Event* event) {
+SDL_AppResult App::HandleEvent(SDL_Event* event) {
   if (event->type == SDL_EVENT_QUIT) {
     return SDL_APP_SUCCESS;
   }

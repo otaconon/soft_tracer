@@ -7,26 +7,51 @@
 #include <random>
 
 namespace utils {
+inline std::mt19937& get_random_generator() {
+  thread_local std::mt19937 generator(std::random_device{}());
+  return generator;
+}
+
 template <typename T>
 T random() {
-  thread_local std::mt19937 generator(std::random_device{}());
-  thread_local std::uniform_real_distribution<T> distribution(0.0, 1.0);
-  return distribution(generator);
+  if constexpr (std::is_same_v<T, bool>) {
+    std::bernoulli_distribution distribution(0.5);
+    return distribution(get_random_generator());
+  } else if constexpr (std::is_floating_point_v<T>) {
+    std::uniform_real_distribution<T> distribution(0.0, 1.0);
+    return distribution(get_random_generator());
+  } else if constexpr (std::is_integral_v<T>) {
+    std::uniform_int_distribution<T> distribution;
+    return distribution(get_random_generator());
+  }
+  return T{};
 }
 
-inline glm::vec3 random() {
-  thread_local std::mt19937 generator(std::random_device{}());
-  thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
-  return { distribution(generator), distribution(generator), distribution(generator) };
+template <>
+inline glm::vec3 random<glm::vec3>() {
+  return { random<float>(), random<float>(), random<float>() };
 }
 
 template <typename T>
-T random(T min, T max) {
-  return min + (max - min) * random<T>();
+ T random(T min, T max) {
+  if constexpr (std::is_floating_point_v<T>) {
+    std::uniform_real_distribution<T> distribution(min, max);
+    return distribution(get_random_generator());
+  } else if constexpr (std::is_integral_v<T>) {
+    std::uniform_int_distribution<T> distribution(min, max);
+    return distribution(get_random_generator());
+  }
+  return T{};
 }
 
 inline glm::vec3 random(const float min, const float max) {
-  return { random<float>(min, max), random<float>(min, max), random<float>(min, max) };
+  return { random<float>(min, max), random<float>(min, max),
+    random<float>(min, max) };
+}
+
+inline glm::vec3 random(const glm::vec3& min, const glm::vec3& max) {
+  return { random<float>(min.x, max.x), random<float>(min.y, max.y),
+    random<float>(min.z, max.z) };
 }
 
 inline glm::vec3 random_unit() {

@@ -20,17 +20,17 @@ void Camera::look_at(const glm::vec3 target) {
 }
 
 void Camera::recalculate() {
-  float focal_length = glm::length(_target - _position);
+  const float focal_length = glm::length(_target - _position);
   const float theta = glm::radians(_vfov);
   const float h = std::tan(theta / 2);
   const float viewport_height = 2.0f * h * focal_length;
   const float viewport_width =
       viewport_height * (static_cast<float>(_image_width) / _image_height);
 
-  glm::vec3 forward = glm::normalize(_target - _position);
-  glm::vec3 right =
+  const glm::vec3 forward = glm::normalize(_target - _position);
+  const glm::vec3 right =
       glm::normalize(glm::cross(forward, glm::vec3{ 0.f, 1.f, 0.f }));
-  glm::vec3 up = glm::normalize(glm::cross(right, forward));
+  const glm::vec3 up = glm::normalize(glm::cross(right, forward));
 
   const glm::vec3 viewport_u = viewport_width * right;
   const glm::vec3 viewport_v = -viewport_height * up;

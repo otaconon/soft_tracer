@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <cstdint>
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -41,13 +40,12 @@ public:
     return _image_height;
   }
 
-  void set_pixel(uint32_t x, uint32_t y, float r, float g, float b);
   void set_pixel(uint32_t x, uint32_t y, glm::vec3 color);
   void add_to_pixel(uint32_t x, uint32_t y, glm::vec3 color);
 
 private:
   uint32_t _image_width, _image_height;
-  uint32_t _samples{64};
+  uint32_t _samples{1024};
   uint32_t _steps{10};
 
   std::atomic<bool> _frame_ready;

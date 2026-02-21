@@ -7,7 +7,7 @@ class Window {
 public:
   SDL_AppResult init(uint32_t width, uint32_t height);
   SDL_AppResult render(const std::vector<float>* pixel_buffer, int32_t pitch)const;
-  void shutdown();
+  void shutdown()const;
 
 private:
   SDL_Window* _window{};

@@ -1,4 +1,3 @@
-
 #include "soft_tracer/app.hpp"
 
 #define SDL_MAIN_USE_CALLBACKS 1
@@ -10,15 +9,9 @@
 #include <soft_tracer/ecs/s_entity_manager.hpp>
 #include <soft_tracer/material.hpp>
 
-#include <soft_tracer/camera.hpp>
-#include <soft_tracer/ray_tracer.hpp>
 #include <soft_tracer/sphere.hpp>
 
-SDL_AppResult SDL_AppInit(void** app_state, int argc, char* argv[]) {
-  constexpr float aspect_ratio = 16.f / 9.f;
-  constexpr uint32_t render_width = 900;
-  constexpr uint32_t render_height = render_width / aspect_ratio;
-
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
   auto& entity_manager = S_EntityManager::get_instance();
   entity_manager.add_components(entity_manager.create_entity(),
       Sphere{ { -1, 0, -1 }, 0.5f }, make_metallic({ 0.4f, 0.2f, 0.5f }, 0.3f));
@@ -31,22 +24,25 @@ SDL_AppResult SDL_AppInit(void** app_state, int argc, char* argv[]) {
       Sphere{ { 0, -100.5f, -1.f }, 100.f },
       make_lambertian({ 0.1f, 0.1f, 0.1f }));
 
-  *app_state = new App{render_width, render_height};
+  constexpr float aspect_ratio = 16.f / 9.f;
+  constexpr uint32_t render_width = 900;
+  constexpr uint32_t render_height = render_width / aspect_ratio;
+  *appstate = new App{render_width, render_height};
 
   return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void* app_state, SDL_Event* event) {
-  const auto app = static_cast<App*>(app_state);
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
+  const auto app = static_cast<App*>(appstate);
   return app->HandleEvent(event);
 }
 
-SDL_AppResult SDL_AppIterate(void* app_state) {
-  const auto app = static_cast<App*>(app_state);
+SDL_AppResult SDL_AppIterate(void* appstate) {
+  const auto app = static_cast<App*>(appstate);
   return app->HandleIterate();
 }
 
-void SDL_AppQuit(void* app_state, SDL_AppResult result) {
-  const auto app = static_cast<App*>(app_state);
+void SDL_AppQuit(void* appstate, SDL_AppResult result) {
+  const auto app = static_cast<App*>(appstate);
   delete app;
 }

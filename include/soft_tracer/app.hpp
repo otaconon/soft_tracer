@@ -9,7 +9,7 @@ public:
   App(uint32_t render_width, uint32_t render_height);
   ~App();
 
-  SDL_AppResult HandleEvent(const SDL_Event* event);
+  SDL_AppResult HandleEvent(SDL_Event* event);
   SDL_AppResult HandleIterate();
 private:
   Window _window{};
