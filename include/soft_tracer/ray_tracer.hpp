@@ -12,7 +12,7 @@ struct Tile {
   size_t x, y, w, h;
 };
 
-constexpr uint8_t g_channels = 3;
+constexpr uint8_t g_channels = 4;
 
 class RayTracer {
 public:
@@ -28,6 +28,10 @@ public:
 
   [[nodiscard]] bool is_frame_ready() const noexcept {
     return _frame_ready;
+  }
+
+  std::vector<float>* get_render_buffer() noexcept {
+    return &_render_buffer;
   }
 
   [[nodiscard]] constexpr uint32_t get_image_width() const noexcept {

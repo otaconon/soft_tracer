@@ -112,16 +112,6 @@ void RayTracer::write_image(uint8_t *dst_image, const int32_t pitch) const {
   }
 }
 
-void RayTracer::set_pixel(
-    const uint32_t x, const uint32_t y, const float r, const float g, const float b) {
-  const uint32_t idx = (y * _image_width + x) * g_channels;
-  assert(idx < _render_buffer.size() && "Pixel index out of range");
-
-  _render_buffer[idx + 0] = r;
-  _render_buffer[idx + 1] = g;
-  _render_buffer[idx + 2] = b;
-}
-
 void RayTracer::set_pixel(const uint32_t x, const uint32_t y, const glm::vec3 color) {
   const size_t idx = (y * _image_width + x) * g_channels;
   assert(idx < _render_buffer.size() && "Pixel index out of range");
@@ -129,6 +119,7 @@ void RayTracer::set_pixel(const uint32_t x, const uint32_t y, const glm::vec3 co
   _render_buffer[idx + 0] = glm::clamp(color.r, 0.f, 1.f);
   _render_buffer[idx + 1] = glm::clamp(color.g, 0.f, 1.f);
   _render_buffer[idx + 2] = glm::clamp(color.b, 0.f, 1.f);
+  _render_buffer[idx + 3] = 1.f;
 }
 
 void RayTracer::add_to_pixel(const uint32_t x, const uint32_t y, const glm::vec3 color) {
@@ -138,4 +129,5 @@ void RayTracer::add_to_pixel(const uint32_t x, const uint32_t y, const glm::vec3
   _render_buffer[idx + 0] += glm::clamp(color.r, 0.f, 1.f);
   _render_buffer[idx + 1] += glm::clamp(color.g, 0.f, 1.f);
   _render_buffer[idx + 2] += glm::clamp(color.b, 0.f, 1.f);
+  _render_buffer[idx + 3] += 1.f;
 }
